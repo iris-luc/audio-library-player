@@ -404,8 +404,9 @@
         }
 
         player.addEventListener('error', () => {
-            console.error('Media error:', player.error);
-            alert('Không thể phát audio. Hãy đảm bảo bạn đã copy các file âm thanh vào thư mục "audio" và đặt tên đúng như trong cấu hình.');
+            const currentUrl = player.src;
+            console.error('Media error at:', currentUrl, player.error);
+            alert(`LỖI: Không thể phát audio.\n\nĐường dẫn đang thử: ${currentUrl}\n\nLưu ý:\n1. Kiểm tra folder trên GitHub có đúng tên là "Hon-khong-gioi-han" không.\n2. Kiểm tra file có đúng là "Chuong-X.mp3" (C viết hoa) không.\n3. GitHub phân biệt chữ HOA và chữ thường.`);
         });
 
         function loadChapter(index) {
