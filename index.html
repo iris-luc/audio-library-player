@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Audiobook Player</title>
+    <style>
+        :root {
+            --accent: #ff5500;
+            /* SoundCloud Orange */
+            --muted: #888;
+            --border: #333;
+            --bg: #000;
+            --container-bg: #111;
+            --text: #eee;
+            --text-dim: #aaa;
+        }
+
+        body {
+            font-family: "Inter", "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 24px;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+
+        p.lead {
+            color: var(--muted);
+            margin: 0 0 24px;
+            font-size: 14px;
+        }
+
+        .player-box {
+            background: #1a1a1a;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .seek-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        button {
+            background: #222;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #333;
+            border-color: #444;
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px 32px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button.primary:hover {
+            background: #ff6622;
+            transform: scale(1.02);
+        }
+
+        button.icon {
+            width: 48px;
+            height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .seek {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .time-label {
+            font-size: 12px;
+            font-family: monospace;
+            color: var(--text-dim);
+            min-width: 45px;
+        }
+
+        input[type=range] {
+            flex: 1;
+            cursor: pointer;
+            accent-color: var(--accent);
+            height: 4px;
+        }
+
+        .list {
+            margin-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .chapter {
+            padding: 14px 16px;
+            border-bottom: 1px solid #222;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chapter:hover {
+            background: #1a1a1a;
+        }
+
+        .chapter.active {
+            background: #222;
+            border-left: 4px solid var(--accent);
+        }
+
+        .chapter-title {
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .chapter.active .chapter-title {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .small {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .play-indicator {
+            font-weight: 800;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.5;
+            }
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: var(--muted);
+            font-size: 12px;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .tog {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        select {
+            background: #1a1a1a;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 id="bookTitle">Đang tải...</h1>
+        <p class="lead" id="bookStatus">Trình phát Sách nói</p>
+
+        <!-- Hidden native audio element used for playback -->
+        <audio id="player" crossorigin="anonymous"></audio>
+
+        <div class="player-box">
+            <div class="controls">
+                <div class="main-controls">
+                    <button id="prevBtn" class="icon" title="Chương trước">⏮</button>
+                    <button id="playBtn" class="primary" title="Phát / Tạm dừng">PHÁT</button>
+                    <button id="stopBtn" class="icon" title="Dừng">⏹</button>
+                    <button id="nextBtn" class="icon" title="Chương tiếp">⏭</button>
+                </div>
+
+                <div class="seek-container">
+                    <div class="seek">
+                        <span id="curTime" class="time-label">00:00</span>
+                        <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1" aria-label="Tua" />
+                        <span id="durTime" class="time-label">00:00</span>
+                    </div>
+                </div>
+
+                <div class="volume-container">
+                    <span class="small">Âm lượng</span>
+                    <input id="volume" type="range" min="0" max="1" step="0.01" value="1" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="justify-content:space-between;gap:12px;margin-bottom:20px">
+            <label class="tog">
+                <input id="autonext" type="checkbox" checked />
+                <span>Tự động chuyển chương</span>
+            </label>
+
+            <div style="display:flex; align-items:center; gap:12px">
+                <label class="small">Chọn Chương</label>
+                <select id="chapterSelect"></select>
+            </div>
+        </div>
+
+        <div class="list" id="chapterList" aria-live="polite"></div>
+
+        <div class="footer">
+            <div>Mẹo: Bạn có thể sử dụng các phím mũi tên ← → để tua nhanh/chậm 10 giây. Phím Cách (Space) để Phát/Dừng.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==============================================================================
+        // CẤU HÌNH SÁCH NÓI (AUDIOBOOK CONFIG)
+        // ==============================================================================
+        // Hướng dẫn: 
+        // 1. Tạo thư mục con tên là "audio" nằm cùng cấp với file này.
+        // 2. Chép các file audio vào thư mục "audio".
+        // 3. Đổi tên file theo đúng "url" bên dưới (ví dụ: Chuong-0.mp3).
+        // 4. Nếu là file .wav thì sửa "type" thành 'wav'.
+        // ==============================================================================
+
+        const AUDIO_CONFIG = {
+            bookTitle: 'Hồn Không Giới Hạn',
+            author: 'Michael Singer',
+            intro: {
+                title: 'Lời cám ơn',
+                url: './audio/Chuong-0.mp3', // Có thể là .wav hoặc .mp3
+                type: 'mp3',
+            },
+            chapters: [
+                { id: 1, title: 'Chương 1: Tiếng nói bên trong đầu bạn', url: './audio/Chuong-1.mp3', type: 'mp3' },
+                { id: 2, title: 'Chương 2: Người bạn cùng phòng - nội tâm của bạn', url: './audio/Chuong-2.mp3', type: 'mp3' },
+                { id: 3, title: 'Chương 3: Bạn là ai?', url: './audio/Chuong-3.mp3', type: 'mp3' },
+                { id: 4, title: 'Chương 4: Cái tôi tỉnh thức', url: './audio/Chuong-4.mp3', type: 'mp3' },
+                { id: 5, title: 'Chương 5: Năng lượng vô hạn', url: './audio/Chuong-5.mp3', type: 'mp3' },
+                { id: 6, title: 'Chương 6: Những bí mật của trái tim tâm linh', url: './audio/Chuong-6.mp3', type: 'mp3' },
+                { id: 7, title: 'Chương 7: Vượt qua xu hướng đóng lòng', url: './audio/Chuong-7.mp3', type: 'mp3' },
+                { id: 8, title: 'Chương 8: Buông bỏ ngay bây giờ hoặc vấp ngã', url: './audio/Chuong-8.mp3', type: 'mp3' },
+                { id: 9, title: 'Chương 9: Loại bỏ chiếc gai trong tâm hồn', url: './audio/Chuong-9.mp3', type: 'mp3' },
+                { id: 10, title: 'Chương 10: Giành lại sự tự do cho linh hồn', url: './audio/Chuong-10.mp3', type: 'mp3' },
+                { id: 11, title: 'Chương 11: Đau đớn - cái giá của sự tự do', url: './audio/Chuong-11.mp3', type: 'mp3' },
+                { id: 12, title: 'Chương 12: Phá đổ những bức tường', url: './audio/Chuong-12.mp3', type: 'mp3' },
+                { id: 13, title: 'Chương 13: Xa, thật xa hơn nữa', url: './audio/Chuong-13.mp3', type: 'mp3' },
+                { id: 14, title: 'Chương 14: Buông bỏ sự kiên cố giả tạo', url: './audio/Chuong-14.mp3', type: 'mp3' },
+                { id: 15, title: 'Chương 15: Con đường của hạnh phúc vô điều kiện', url: './audio/Chuong-15.mp3', type: 'mp3' },
+                { id: 16, title: 'Chương 16: Con đường tâm linh của sự không kháng cự', url: './audio/Chuong-16.mp3', type: 'mp3' },
+                { id: 17, title: 'Chương 17: Chiêm nghiệm về cái chết', url: './audio/Chuong-17.mp3', type: 'mp3' },
+                { id: 18, title: 'Chương 18: Bí mật của Trung đạo', url: './audio/Chuong-18.mp3', type: 'mp3' },
+                { id: 19, title: 'Chương 19: Đôi mắt yêu thương của Chúa', url: './audio/Chuong-19.mp3', type: 'mp3' },
+            ]
+        };
+
+        // ====== PLAYER LOGIC ======
+        const player = document.getElementById('player');
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const seekBar = document.getElementById('seekBar');
+        const curTime = document.getElementById('curTime');
+        const durTime = document.getElementById('durTime');
+        const volume = document.getElementById('volume');
+        const autonext = document.getElementById('autonext');
+        const chapterSelect = document.getElementById('chapterSelect');
+        const chapterList = document.getElementById('chapterList');
+
+        // Update UI with Config
+        document.getElementById('bookTitle').textContent = `${AUDIO_CONFIG.bookTitle}${AUDIO_CONFIG.author ? ' - ' + AUDIO_CONFIG.author : ''}`;
+        document.title = AUDIO_CONFIG.bookTitle;
+
+        // Chapters include "Lời Mở Đầu" as index 0
+        const episodes = [
+            { title: 'Lời Mở Đầu', url: AUDIO_CONFIG.intro.url, type: AUDIO_CONFIG.intro.type },
+            ...AUDIO_CONFIG.chapters.map(c => ({ ...c }))
+        ];
+
+        document.getElementById('bookStatus').textContent = `Trình phát Sách nói • ${episodes.length} phần có sẵn`;
+
+        let state = { currentIndex: 0 };
+
+        function renderChapters() {
+            chapterSelect.innerHTML = '';
+            chapterList.innerHTML = '';
+            episodes.forEach((c, idx) => {
+                const opt = document.createElement('option');
+                opt.value = String(idx);
+                opt.textContent = c.title;
+                chapterSelect.appendChild(opt);
+
+                const div = document.createElement('div');
+                div.className = 'chapter';
+                div.dataset.idx = String(idx);
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px; width:100%">
+                        <span class="small" style="min-width:24px">${idx === 0 ? 'Mở đầu' : idx}</span>
+                        <div class="chapter-title" style="flex:1">${c.title}</div>
+                        <div class="play-indicator" style="color:var(--accent); font-size:11px; display:none">ĐANG PHÁT</div>
+                    </div>
+                `;
+                chapterList.appendChild(div);
+            });
+            highlightCurrent();
+        }
+
+        function highlightCurrent() {
+            Array.from(chapterList.children).forEach((el, idx) => {
+                const isActive = idx === state.currentIndex;
+                el.classList.toggle('active', isActive);
+                const indicator = el.querySelector('.play-indicator');
+                if (indicator) indicator.style.display = isActive ? 'block' : 'none';
+            });
+            chapterSelect.value = String(state.currentIndex);
+        }
+
+        function formatTime(s) {
+            if (isNaN(s)) return '00:00';
+            const m = Math.floor(s / 60).toString().padStart(2, '0');
+            const ss = Math.floor(s % 60).toString().padStart(2, '0');
+            return `${m}:${ss}`;
+        }
+
+        player.addEventListener('error', () => {
+            console.error('Media error:', player.error);
+            alert('Không thể phát audio. Hãy đảm bảo bạn đã copy các file âm thanh vào thư mục "audio" và đặt tên đúng như trong cấu hình.');
+        });
+
+        function loadChapter(index) {
+            state.currentIndex = index;
+            player.src = episodes[index].url;
+            player.load();
+            highlightCurrent();
+        }
+
+        async function playCurrent() {
+            player.src = episodes[state.currentIndex].url;
+            player.load();
+            try {
+                await player.play();
+                playBtn.textContent = 'TẠM DỪNG';
+            } catch (e) { console.error(e); }
+            highlightCurrent();
+        }
+
+        playBtn.addEventListener('click', async () => {
+            if (player.paused) {
+                if (!player.src) loadChapter(state.currentIndex);
+                try { await player.play(); playBtn.textContent = 'TẠM DỪNG'; } catch (e) { }
+            } else {
+                player.pause();
+                playBtn.textContent = 'PHÁT';
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            player.pause();
+            player.currentTime = 0;
+            playBtn.textContent = 'PHÁT';
+        });
+
+        prevBtn.addEventListener('click', () => {
+            state.currentIndex = Math.max(0, state.currentIndex - 1);
+            playCurrent();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            state.currentIndex = Math.min(episodes.length - 1, state.currentIndex + 1);
+            playCurrent();
+        });
+
+        chapterSelect.addEventListener('change', (e) => {
+            state.currentIndex = Number(e.target.value);
+            playCurrent();
+        });
+
+        chapterList.addEventListener('click', (e) => {
+            const row = e.target.closest('.chapter');
+            if (row) {
+                state.currentIndex = Number(row.dataset.idx);
+                playCurrent();
+            }
+        });
+
+        player.addEventListener('timeupdate', () => {
+            const cur = player.currentTime;
+            const dur = player.duration || 0;
+            curTime.textContent = formatTime(cur);
+            durTime.textContent = formatTime(dur);
+            seekBar.value = dur ? (cur / dur * 100) : 0;
+        });
+
+        player.addEventListener('loadedmetadata', () => {
+            durTime.textContent = formatTime(player.duration);
+        });
+
+        seekBar.addEventListener('input', (e) => {
+            const pct = Number(e.target.value);
+            player.currentTime = (pct / 100) * (player.duration || 0);
+        });
+
+        volume.addEventListener('input', (e) => { player.volume = Number(e.target.value); });
+
+        player.addEventListener('ended', async () => {
+            playBtn.textContent = 'PHÁT';
+            if (autonext.checked && state.currentIndex < episodes.length - 1) {
+                state.currentIndex++;
+                await playCurrent();
+            }
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
+            if (e.code === 'ArrowRight') player.currentTime += 10;
+            if (e.code === 'ArrowLeft') player.currentTime -= 10;
+        });
+
+        renderChapters();
+        loadChapter(0);
+    </script>
+</body>
+
+</html>
