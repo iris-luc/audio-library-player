@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Audiobook Player</title>
+    <style>
+        :root {
+            --accent: #ff5500;
+            --muted: #888;
+            --border: #333;
+            --bg: #000;
+            --container-bg: #111;
+            --text: #eee;
+            --text-dim: #aaa;
+        }
+
+        body {
+            font-family: "Inter", sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 24px;
+            color: var(--text);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--container-bg);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 26px;
+        }
+
+        p.lead {
+            color: var(--muted);
+            margin: 0 0 24px;
+            font-size: 14px;
+        }
+
+        .player-box {
+            background: #1a1a1a;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .seek-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        button {
+            background: #222;
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button.primary {
+            background: var(--accent);
+            border: none;
+            padding: 12px 32px;
+            font-weight: 700;
+        }
+
+        .seek {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .time-label {
+            font-size: 12px;
+            font-family: monospace;
+            color: var(--text-dim);
+        }
+
+        input[type=range] {
+            flex: 1;
+            accent-color: var(--accent);
+        }
+
+        .chapter {
+            padding: 12px;
+            border-bottom: 1px solid #222;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chapter.active {
+            background: #222;
+            border-left: 4px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Quay lại thư viện</a>
+        <h1 id="bookTitle">Đang tải...</h1>
+        <p class="lead" id="bookStatus">...</p>
+
+        <audio id="player"></audio>
+
+        <div class="player-box">
+            <div class="controls">
+                <div class="main-controls">
+                    <button id="prevBtn">⏮</button>
+                    <button id="playBtn" class="primary">PHÁT</button>
+                    <button id="stopBtn">⏹</button>
+                    <button id="nextBtn">⏭</button>
+                </div>
+                <div class="seek-container">
+                    <div class="seek">
+                        <span id="curTime" class="time-label">00:00</span>
+                        <input id="seekBar" type="range" min="0" max="100" value="0" step="0.1">
+                        <span id="durTime" class="time-label">00:00</span>
+                    </div>
+                </div>
+                <div style="text-align:center">
+                    <input id="volume" type="range" min="0" max="1" step="0.01" value="1" style="width:100px">
+                </div>
+            </div>
+        </div>
+
+        <div class="list" id="chapterList"></div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookFolder = urlParams.get('book') || 'audio';
+
+        let episodes = [];
+        let state = { currentIndex: 0 };
+        const player = document.getElementById('player');
+
+        async function initPlayer() {
+            try {
+                const response = await fetch(`${bookFolder}/config.json`);
+                const config = await response.json();
+
+                document.getElementById('bookTitle').textContent = config.bookTitle;
+
+                episodes = [
+                    { title: config.intro.title, url: config.intro.url, type: config.intro.type },
+                    ...config.chapters
+                ];
+
+                document.getElementById('bookStatus').textContent = `${config.author} • ${episodes.length} phần`;
+
+                renderChapters();
+                loadChapter(0);
+            } catch (e) {
+                console.error(e);
+                alert("Không thể tải cấu hình sách.");
+            }
+        }
+
+        function renderChapters() {
+            const list = document.getElementById('chapterList');
+            list.innerHTML = '';
+            episodes.forEach((c, idx) => {
+                const div = document.createElement('div');
+                div.className = 'chapter';
+                div.innerHTML = `<span>${idx === 0 ? 'Mở đầu' : idx}. ${c.title}</span>`;
+                div.onclick = () => { state.currentIndex = idx; playCurrent(); };
+                list.appendChild(div);
+            });
+            highlightCurrent();
+        }
+
+        function highlightCurrent() {
+            Array.from(document.getElementById('chapterList').children).forEach((el, idx) => {
+                el.classList.toggle('active', idx === state.currentIndex);
+            });
+        }
+
+        function loadChapter(index) {
+            state.currentIndex = index;
+            player.src = episodes[index].url;
+            player.load();
+            highlightCurrent();
+        }
+
+        async function playCurrent() {
+            player.src = episodes[state.currentIndex].url;
+            player.load();
+            try { await player.play(); document.getElementById('playBtn').textContent = 'TẠM DỪNG'; } catch (e) { }
+            highlightCurrent();
+        }
+
+        document.getElementById('playBtn').onclick = async () => {
+            if (player.paused) {
+                if (!player.src) loadChapter(state.currentIndex);
+                await player.play();
+                document.getElementById('playBtn').textContent = 'TẠM DỪNG';
+            } else {
+                player.pause();
+                document.getElementById('playBtn').textContent = 'PHÁT';
+            }
+        };
+
+        player.ontimeupdate = () => {
+            const cur = player.currentTime;
+            const dur = player.duration || 0;
+            document.getElementById('curTime').textContent = formatTime(cur);
+            document.getElementById('durTime').textContent = formatTime(dur);
+            document.getElementById('seekBar').value = dur ? (cur / dur * 100) : 0;
+        };
+
+        function formatTime(s) {
+            const m = Math.floor(s / 60).toString().padStart(2, '0');
+            const ss = Math.floor(s % 60).toString().padStart(2, '0');
+            return `${m}:${ss}`;
+        }
+
+        initPlayer();
+    </script>
+</body>
+
+</html>
