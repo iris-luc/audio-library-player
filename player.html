@@ -172,18 +172,30 @@
 
         async function initPlayer() {
             try {
+                // Đảm bảo fetch đúng file config cho dù bookFolder là path cục bộ hay URL từ repo khác
                 const response = await fetch(`${bookFolder}/config.json`);
+                if (!response.ok) throw new Error("Failed to load config");
                 const config = await response.json();
 
                 document.getElementById('bookTitle').textContent = config.bookTitle;
 
+                // Hàm bổ trợ để xử lý đường dẫn audio (nếu là link tương đối thì cộng thêm domain vào)
+                const fixUrl = (url) => {
+                    if (url.startsWith('http')) return url;
+                    // Nếu bookFolder là URL (từ repo khác), ta gộp nó với đường dẫn tương đối của file audio
+                    if (bookFolder.startsWith('http')) {
+                        const cleanUrl = url.replace(/^\.\//, '');
+                        return `${bookFolder}/${cleanUrl}`;
+                    }
+                    return url;
+                };
+
                 episodes = [
-                    { title: config.intro.title, url: config.intro.url, type: config.intro.type },
-                    ...config.chapters
+                    { title: config.intro.title, url: fixUrl(config.intro.url), type: config.intro.type },
+                    ...config.chapters.map(ch => ({ ...ch, url: fixUrl(ch.url) }))
                 ];
 
                 document.getElementById('bookStatus').textContent = `${config.author} • ${episodes.length} phần`;
-
                 renderChapters();
                 loadChapter(0);
             } catch (e) {
