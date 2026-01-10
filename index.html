@@ -229,21 +229,29 @@
             }
 
             .grid {
-                grid-template-columns: 1fr;
-                gap: 14px;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
                 margin-top: 14px;
             }
 
             .book-card {
                 border-radius: 8px;
+                padding: 0;
+                box-shadow: none;
             }
 
             .book-cover {
-                height: 140px;
+                width: 100%;
+                height: auto;
+                aspect-ratio: 3/4;
+                object-fit: cover;
+                background: #232323;
+                display: block;
+                border-radius: 8px 8px 0 0;
             }
 
             .book-info {
-                padding: 12px 10px 10px 10px;
+                padding: 10px 8px 8px 8px;
             }
 
             .book-title {
