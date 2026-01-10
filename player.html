@@ -135,6 +135,9 @@
         <a href="index.html" class="back-link">← Quay lại thư viện</a>
         <h1 id="bookTitle">Đang tải...</h1>
         <p class="lead" id="bookStatus">...</p>
+        <div id="bookDescription"
+            style="color: var(--text-dim); font-size: 15px; margin-bottom: 18px; font-style: italic; display: none;">
+        </div>
 
         <audio id="player"></audio>
 
@@ -184,7 +187,7 @@
                     if (url.startsWith('http')) return url;
                     // Nếu bookFolder là URL (từ repo khác), ta gộp nó với đường dẫn tương đối của file audio
                     if (bookFolder.startsWith('http')) {
-                        const cleanUrl = url.replace(/^\.\//, '');
+                        const cleanUrl = url.replace(/^\.\/, '');
                         return `${bookFolder}/${cleanUrl}`;
                     }
                     return url;
@@ -198,9 +201,40 @@
                 document.getElementById('bookStatus').textContent = `${config.author} • ${episodes.length} phần`;
                 renderChapters();
                 loadChapter(0);
+
+                // Hiển thị mô tả sách từ catalog.json
+                showBookDescription();
             } catch (e) {
                 console.error(e);
                 alert("Không thể tải cấu hình sách.");
+            }
+        }
+
+        async function showBookDescription() {
+            // Lấy id hoặc folder để so khớp với catalog.json
+            let folderKey = bookFolder;
+            // Nếu là URL, so khớp theo folder là URL, nếu là local thì lấy tên thư mục
+            let matchKey = folderKey;
+            if (!folderKey.startsWith('http')) {
+                // Lấy tên thư mục cuối cùng
+                matchKey = folderKey.replace(/\/$/, '').split('/').pop();
+            }
+            try {
+                const res = await fetch('catalog.json');
+                const catalog = await res.json();
+                // Tìm sách theo folder hoặc URL
+                const book = catalog.find(b => {
+                    if (b.folder === folderKey) return true;
+                    if (!folderKey.startsWith('http') && b.folder.replace(/\/$/, '').split('/').pop() === matchKey) return true;
+                    return false;
+                });
+                if (book && book.description) {
+                    const descDiv = document.getElementById('bookDescription');
+                    descDiv.textContent = book.description;
+                    descDiv.style.display = 'block';
+                }
+            } catch (e) {
+                // Không hiển thị gì nếu lỗi
             }
         }
 
