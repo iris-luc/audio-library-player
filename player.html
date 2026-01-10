@@ -185,13 +185,8 @@
                 // Hàm bổ trợ để xử lý đường dẫn audio (nếu là link tương đối thì cộng thêm domain vào)
                 const fixUrl = (url) => {
                     if (url.startsWith('http')) return url;
-                    // Nếu bookFolder là URL (từ repo khác), ta gộp nó với đường dẫn tương đối của file audio
-                    if (bookFolder.startsWith('http')) {
-                        const cleanUrl = url.replace(/^\.[\/]/, '');
-                        return `${bookFolder}/${cleanUrl}`;
-                    }
-                    // Nếu là folder cục bộ, nối với bookFolder
-                    const cleanUrl = url.replace(/^\.[\/]/, '');
+                    // Chuẩn hóa: loại bỏ ./ hoặc / ở đầu để tránh lỗi khi nối đường dẫn
+                    let cleanUrl = url.replace(/^\.[\/]/, '').replace(/^\//, '');
                     return `${bookFolder}/${cleanUrl}`;
                 };
 
