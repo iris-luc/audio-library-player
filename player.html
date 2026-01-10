@@ -190,7 +190,9 @@
                         const cleanUrl = url.replace(/^\.[\/]/, '');
                         return `${bookFolder}/${cleanUrl}`;
                     }
-                    return url;
+                    // Nếu là folder cục bộ, nối với bookFolder
+                    const cleanUrl = url.replace(/^\.[\/]/, '');
+                    return `${bookFolder}/${cleanUrl}`;
                 };
 
                 episodes = [
