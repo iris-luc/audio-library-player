@@ -77,22 +77,77 @@
             color: var(--muted);
             font-size: 14px;
         }
+
+        /* Thêm style cho phần header UX và quote */
+        .header-ux {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .build-with {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .build-with .heart {
+            color: #ff3366;
+            font-size: 1.25rem;
+            vertical-align: middle;
+        }
+
+        .proust-quote {
+            font-family: 'Georgia', serif;
+            font-size: 1.05rem;
+            color: var(--muted);
+            margin-bottom: 6px;
+            font-style: italic;
+            text-align: center;
+            max-width: 600px;
+        }
+
+        .proust-author {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+        }
+
+        @media (max-width: 600px) {
+            .header-ux {
+                margin-bottom: 18px;
+            }
+
+            .build-with {
+                font-size: 1rem;
+            }
+
+            .proust-quote {
+                font-size: 0.98rem;
+                max-width: 98vw;
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h1>Thư Viện Sách Nói</h1>
-        <h1
-            style="font-family: 'Inter', serif; font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: var(--accent); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
-            Build with <span style="color: #ff3366; font-size: 1.7rem; vertical-align: middle;">❤️</span> from Jasmine
-            &amp; Iris
-        </h1>
-        <div
-            style="font-family: 'Georgia', serif; font-size: 1.1rem; color: var(--text-muted); margin-bottom: 12px; font-style: italic;">
-            "Chuyến du hành thực sự của sự khám phá không phải là tìm kiếm những vùng đất mới, mà là có được đôi mắt
-            mới."<br>
-            <span style="font-size: 0.95rem; color: var(--text-dim);">— Marcel Proust</span>
+        <div class="header-ux">
+            <div class="build-with">
+                Build with <span class="heart">❤️</span> from Jasmine &amp; Iris
+            </div>
+            <div class="proust-quote">
+                "Chuyến du hành thực sự của sự khám phá không phải là tìm kiếm những vùng đất mới, mà là có được đôi mắt
+                mới."<br>
+                <span class="proust-author">— Marcel Proust</span>
+            </div>
         </div>
         <div id="catalogGrid" class="grid">
             <p>Đang tải danh mục...</p>
