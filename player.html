@@ -185,13 +185,10 @@
                 // Hàm bổ trợ để xử lý đường dẫn audio (nếu là link tương đối thì cộng thêm domain vào)
                 const fixUrl = (url) => {
                     if (url.startsWith('http')) return url;
-                    // Nếu url đã chứa bookFolder ở đầu thì trả về nguyên vẹn (tránh lặp)
-                    if (url.startsWith(bookFolder + '/') || url.startsWith('./' + bookFolder + '/')) {
-                        return url.replace(/^\./, '');
-                    }
-                    // Chuẩn hóa: loại bỏ ./ hoặc / ở đầu để tránh lỗi khi nối đường dẫn
-                    let cleanUrl = url.replace(/^\.[\/]/, '').replace(/^\//, '');
-                    return `${bookFolder}/${cleanUrl}`;
+                    // Loại bỏ mọi ./ hoặc / ở đầu
+                    let cleanUrl = url.replace(/^\.?\/?/, '');
+                    // Không thêm dấu / ở đầu
+                    return `${bookFolder}/${cleanUrl}`.replace(/^\//, '');
                 };
 
                 episodes = [
