@@ -265,17 +265,32 @@
         }
 
         async function playCurrent() {
-            player.src = episodes[state.currentIndex].url;
-            player.load();
-            try { await player.play(); document.getElementById('playBtn').textContent = 'TẠM DỪNG'; } catch (e) { }
+            // Chỉ cập nhật src nếu khác hiện tại
+            if (player.src !== episodes[state.currentIndex].url) {
+                player.src = episodes[state.currentIndex].url;
+                player.load();
+            }
+            try {
+                await player.play();
+                document.getElementById('playBtn').textContent = 'TẠM DỪNG';
+            } catch (e) {
+                document.getElementById('playBtn').textContent = 'PHÁT';
+            }
             highlightCurrent();
         }
 
         document.getElementById('playBtn').onclick = async () => {
+            if (player.src !== episodes[state.currentIndex].url) {
+                player.src = episodes[state.currentIndex].url;
+                player.load();
+            }
             if (player.paused) {
-                if (!player.src) loadChapter(state.currentIndex);
-                await player.play();
-                document.getElementById('playBtn').textContent = 'TẠM DỪNG';
+                try {
+                    await player.play();
+                    document.getElementById('playBtn').textContent = 'TẠM DỪNG';
+                } catch (e) {
+                    document.getElementById('playBtn').textContent = 'PHÁT';
+                }
             } else {
                 player.pause();
                 document.getElementById('playBtn').textContent = 'PHÁT';
@@ -288,6 +303,37 @@
             document.getElementById('curTime').textContent = formatTime(cur);
             document.getElementById('durTime').textContent = formatTime(dur);
             document.getElementById('seekBar').value = dur ? (cur / dur * 100) : 0;
+        };
+
+        // Xử lý seekBar
+        document.getElementById('seekBar').addEventListener('input', function () {
+            if (player.duration) {
+                player.currentTime = this.value / 100 * player.duration;
+            }
+        });
+
+        // Xử lý volume
+        document.getElementById('volume').addEventListener('input', function () {
+            player.volume = this.value;
+        });
+
+        // Nút next/prev
+        document.getElementById('nextBtn').onclick = () => {
+            if (state.currentIndex < episodes.length - 1) {
+                state.currentIndex++;
+                playCurrent();
+            }
+        };
+        document.getElementById('prevBtn').onclick = () => {
+            if (state.currentIndex > 0) {
+                state.currentIndex--;
+                playCurrent();
+            }
+        };
+        document.getElementById('stopBtn').onclick = () => {
+            player.pause();
+            player.currentTime = 0;
+            document.getElementById('playBtn').textContent = 'PHÁT';
         };
 
         function formatTime(s) {
