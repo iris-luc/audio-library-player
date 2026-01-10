@@ -185,10 +185,14 @@
                 // Hàm bổ trợ để xử lý đường dẫn audio (nếu là link tương đối thì cộng thêm domain vào)
                 const fixUrl = (url) => {
                     if (url.startsWith('http')) return url;
-                    // Loại bỏ mọi ./ hoặc / ở đầu
+                    // Nếu url đã chứa bookFolder ở đầu thì chỉ lấy phần sau
+                    if (url.includes(bookFolder + '/')) {
+                        // Trả về phần sau bookFolder/ (giữ đúng cấu trúc thư mục)
+                        return url.replace(/^\.?\/?/, '').replace(/^.*?hon-khong-gioi-han-audio\//, 'hon-khong-gioi-han-audio/');
+                    }
+                    // Loại bỏ ./ hoặc / ở đầu
                     let cleanUrl = url.replace(/^\.?\/?/, '');
-                    // Không thêm dấu / ở đầu
-                    return `${bookFolder}/${cleanUrl}`.replace(/^\//, '');
+                    return `${bookFolder}/${cleanUrl}`.replace(/^\/+/, '');
                 };
 
                 episodes = [
