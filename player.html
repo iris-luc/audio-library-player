@@ -268,6 +268,7 @@
 
         async function playCurrent() {
             const url = episodes[state.currentIndex].url;
+            // Chỉ set src và load khi chuyển chương
             if (player.src !== location.origin + '/' + url && player.src !== url) {
                 player.src = url;
                 player.load();
@@ -284,19 +285,13 @@
         }
 
         document.getElementById('playBtn').onclick = async () => {
-            const url = episodes[state.currentIndex].url;
-            if (player.src !== location.origin + '/' + url && player.src !== url) {
-                player.src = url;
-                player.load();
-                console.log('Audio src set:', url);
-            }
             if (player.paused) {
                 try {
                     await player.play();
                     document.getElementById('playBtn').textContent = 'TẠM DỪNG';
                 } catch (e) {
                     document.getElementById('playBtn').textContent = 'PHÁT';
-                    console.error('Không phát được audio:', url, e);
+                    console.error('Không phát được audio:', player.src, e);
                 }
             } else {
                 player.pause();
