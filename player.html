@@ -266,24 +266,28 @@
         }
 
         async function playCurrent() {
-            // Chỉ cập nhật src nếu khác hiện tại
-            if (player.src !== episodes[state.currentIndex].url) {
-                player.src = episodes[state.currentIndex].url;
+            const url = episodes[state.currentIndex].url;
+            if (player.src !== location.origin + '/' + url && player.src !== url) {
+                player.src = url;
                 player.load();
+                console.log('Audio src set:', url);
             }
             try {
                 await player.play();
                 document.getElementById('playBtn').textContent = 'TẠM DỪNG';
             } catch (e) {
                 document.getElementById('playBtn').textContent = 'PHÁT';
+                console.error('Không phát được audio:', url, e);
             }
             highlightCurrent();
         }
 
         document.getElementById('playBtn').onclick = async () => {
-            if (player.src !== episodes[state.currentIndex].url) {
-                player.src = episodes[state.currentIndex].url;
+            const url = episodes[state.currentIndex].url;
+            if (player.src !== location.origin + '/' + url && player.src !== url) {
+                player.src = url;
                 player.load();
+                console.log('Audio src set:', url);
             }
             if (player.paused) {
                 try {
@@ -291,6 +295,7 @@
                     document.getElementById('playBtn').textContent = 'TẠM DỪNG';
                 } catch (e) {
                     document.getElementById('playBtn').textContent = 'PHÁT';
+                    console.error('Không phát được audio:', url, e);
                 }
             } else {
                 player.pause();
